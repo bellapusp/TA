@@ -694,8 +694,14 @@ else if(ih->saddr() == index) {
    forward((aodv_rt_entry*) 0, p, NO_DELAY);
 }
 
-
-void
+/*
+fungsi untuk mengenali paket AODV. Apakah paket tersebut RREQ, RREP, RERR, atau HELLO
+kalau RREQ atau AODVTYPE_RREQ akan diarahkan ke AODV::recvRequest,
+kalau RREP atau AODVTYPE_RREP akan diarahkan ke AODV::recvReply,
+kalau RRER atau AODVTYPE_RRER akan diarahkan ke AODV::recvError,
+kalau HELLO atau AODVTYPE_HELLO akan diarahkan ke AODV::recvHello,
+*/
+void 
 AODV::recvAODV(Packet *p) {
   FILE *fp = fopen("trace.log","a+");
   fprintf(fp, "AODV::recvAODV\n");
