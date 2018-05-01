@@ -704,7 +704,7 @@ kalau HELLO atau AODVTYPE_HELLO akan diarahkan ke AODV::recvHello,
 void 
 AODV::recvAODV(Packet *p) {
   FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::recvAODV\n");
+  fprintf(fp, "AODV::recvAODV <------------ look at da shek\n");
   fclose(fp);
   
  struct hdr_aodv *ah = HDR_AODV(p);
@@ -754,7 +754,7 @@ aodv_rt_entry *rt;
   /*
    * Drop if:
    *      - I'm the source
-   *      - I recently heard this request.
+   *      - I recently heard this request. nah ini diganti
    */
 
   if(rq->rq_src == index) {
@@ -788,7 +788,7 @@ aodv_rt_entry *rt;
   * route is in the route table.
   */
  aodv_rt_entry *rt0; // rt0 is the reverse route 
-   
+   //disini ganti
    rt0 = rtable.rt_lookup(rq->rq_src);
    if(rt0 == 0) { /* if not in the route table */
    // create an entry for the reverse route.
@@ -1165,7 +1165,7 @@ if (ih->daddr() == (nsaddr_t) IP_BROADCAST) {
 
 }
 
-
+//ngirim request
 void
 AODV::sendRequest(nsaddr_t dst) {
   FILE *fp = fopen("trace.log","a+");
