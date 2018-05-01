@@ -39,7 +39,7 @@ The AODV code developed by the CMU/MONARCH group was optimized and tuned by Sami
 #define max(a,b)        ( (a) > (b) ? (a) : (b) )
 #define CURRENT_TIME    Scheduler::instance().clock()
 
-//#define DEBUG
+#define DEBUG
 //#define ERROR
 
 #ifdef DEBUG
@@ -74,6 +74,11 @@ public:
 
 int
 AODV::command(int argc, const char*const* argv) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::command\n");
+  fclose(fp);
+
   if(argc == 2) {
   Tcl& tcl = Tcl::instance();
     
@@ -85,10 +90,10 @@ AODV::command(int argc, const char*const* argv) {
     if(strncasecmp(argv[1], "start", 2) == 0) {
       btimer.handle((Event*) 0);
 
-#ifndef AODV_LINK_LAYER_DETECTION
+//#ifndef AODV_LINK_LAYER_DETECTION
       htimer.handle((Event*) 0);
       ntimer.handle((Event*) 0);
-#endif // LINK LAYER DETECTION
+//#endif // LINK LAYER DETECTION
 
       rtimer.handle((Event*) 0);
       return TCL_OK;
@@ -138,6 +143,11 @@ AODV::command(int argc, const char*const* argv) {
 AODV::AODV(nsaddr_t id) : Agent(PT_AODV),
 			  btimer(this), htimer(this), ntimer(this), 
 			  rtimer(this), lrtimer(this), rqueue() {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::AODV\n");
+  fclose(fp);
+
  
                 
   index = id;
@@ -157,12 +167,22 @@ AODV::AODV(nsaddr_t id) : Agent(PT_AODV),
 
 void
 BroadcastTimer::handle(Event*) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "BroadcastTimer::handle\n");
+  fclose(fp);
+
   agent->id_purge();
   Scheduler::instance().schedule(this, &intr, BCAST_ID_SAVE);
 }
 
 void
 HelloTimer::handle(Event*) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "HelloTimer::handle\n");
+  fclose(fp);
+
    agent->sendHello();
    double interval = MinHelloInterval + 
                  ((MaxHelloInterval - MinHelloInterval) * Random::uniform());
@@ -172,12 +192,22 @@ HelloTimer::handle(Event*) {
 
 void
 NeighborTimer::handle(Event*) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "NeighborTimer::handle\n");
+  fclose(fp);
+
   agent->nb_purge();
   Scheduler::instance().schedule(this, &intr, HELLO_INTERVAL);
 }
 
 void
 RouteCacheTimer::handle(Event*) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "RouteCacheTimer::handle\n");
+  fclose(fp);
+
   agent->rt_purge();
 #define FREQUENCY 0.5 // sec
   Scheduler::instance().schedule(this, &intr, FREQUENCY);
@@ -185,6 +215,11 @@ RouteCacheTimer::handle(Event*) {
 
 void
 LocalRepairTimer::handle(Event* p)  {  // SRD: 5/4/99
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "LocalRepairTimer::handle\n");
+  fclose(fp);
+
 aodv_rt_entry *rt;
 struct hdr_ip *ih = HDR_IP( (Packet *)p);
 
@@ -206,6 +241,9 @@ struct hdr_ip *ih = HDR_IP( (Packet *)p);
       // send RERR
 #ifdef DEBUG
       fprintf(stderr,"Dst - %d, failed local repair\n", rt->rt_dst);
+      FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "Dst - %d, failed local repair\n", rt->rt_dst);
+      fclose(fpdebug);
 #endif      
     }
     Packet::free((Packet *)p);
@@ -219,6 +257,11 @@ struct hdr_ip *ih = HDR_IP( (Packet *)p);
 
 void
 AODV::id_insert(nsaddr_t id, u_int32_t bid) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::id_insert\n");
+  fclose(fp);
+
 BroadcastID *b = new BroadcastID(id, bid);
 
  assert(b);
@@ -229,6 +272,11 @@ BroadcastID *b = new BroadcastID(id, bid);
 /* SRD */
 bool
 AODV::id_lookup(nsaddr_t id, u_int32_t bid) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::id_lookup\n");
+  fclose(fp);
+
 BroadcastID *b = bihead.lh_first;
  
  // Search the list for a match of source and bid
@@ -241,6 +289,11 @@ BroadcastID *b = bihead.lh_first;
 
 void
 AODV::id_purge() {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::id_purge\n");
+  fclose(fp);
+
 BroadcastID *b = bihead.lh_first;
 BroadcastID *bn;
 double now = CURRENT_TIME;
@@ -260,6 +313,11 @@ double now = CURRENT_TIME;
 
 double
 AODV::PerHopTime(aodv_rt_entry *rt) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::PerHopTime\n");
+  fclose(fp);
+
 int num_non_zero = 0, i;
 double total_latency = 0.0;
 
@@ -285,6 +343,11 @@ double total_latency = 0.0;
 
 static void
 aodv_rt_failed_callback(Packet *p, void *arg) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "aodv_rt_failed_callback\n");
+  fclose(fp);
+
   ((AODV*) arg)->rt_ll_failed(p);
 }
 
@@ -293,6 +356,11 @@ aodv_rt_failed_callback(Packet *p, void *arg) {
  */
 void
 AODV::rt_ll_failed(Packet *p) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::rt_ll_failed\n");
+  fclose(fp);
+
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 aodv_rt_entry *rt;
@@ -346,6 +414,11 @@ while((p = ifqueue->filter(broken_nbr))) {
 
 void
 AODV::handle_link_failure(nsaddr_t id) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::handle_link_failure\n");
+  fclose(fp);
+
 aodv_rt_entry *rt, *rtn;
 Packet *rerr = Packet::alloc();
 struct hdr_aodv_error *re = HDR_AODV_ERROR(rerr);
@@ -363,6 +436,12 @@ struct hdr_aodv_error *re = HDR_AODV_ERROR(rerr);
      fprintf(stderr, "%s(%f): %d\t(%d\t%u\t%d)\n", __FUNCTION__, CURRENT_TIME,
 		     index, re->unreachable_dst[re->DestCount],
 		     re->unreachable_dst_seqno[re->DestCount], rt->rt_nexthop);
+
+     FILE *fpdebug = fopen("debug.log","a+");
+     fprintf(fpdebug, "%s(%f): %d\t(%d\t%u\t%d)\n", __FUNCTION__, CURRENT_TIME,
+         index, re->unreachable_dst[re->DestCount],
+         re->unreachable_dst_seqno[re->DestCount], rt->rt_nexthop);
+     fclose(fpdebug);
 #endif // DEBUG
      re->DestCount += 1;
      rt_down(rt);
@@ -374,6 +453,10 @@ struct hdr_aodv_error *re = HDR_AODV_ERROR(rerr);
  if (re->DestCount > 0) {
 #ifdef DEBUG
    fprintf(stderr, "%s(%f): %d\tsending RERR...\n", __FUNCTION__, CURRENT_TIME, index);
+
+   FILE *fpdebug = fopen("debug.log","a+");
+   fprintf(fpdebug, "%s(%f): %d\tsending RERR...\n", __FUNCTION__, CURRENT_TIME, index);
+   fclose(fpdebug);
 #endif // DEBUG
    sendError(rerr, false);
  }
@@ -384,8 +467,17 @@ struct hdr_aodv_error *re = HDR_AODV_ERROR(rerr);
 
 void
 AODV::local_rt_repair(aodv_rt_entry *rt, Packet *p) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::local_rt_repair\n");
+  fclose(fp);
+
 #ifdef DEBUG
   fprintf(stderr,"%s: Dst - %d\n", __FUNCTION__, rt->rt_dst); 
+  
+  FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%s: Dst - %d\n", __FUNCTION__, rt->rt_dst);
+      fclose(fpdebug);
 #endif  
   // Buffer the packet 
   rqueue.enque(p);
@@ -402,6 +494,11 @@ AODV::local_rt_repair(aodv_rt_entry *rt, Packet *p) {
 void
 AODV::rt_update(aodv_rt_entry *rt, u_int32_t seqnum, u_int16_t metric,
 	       	nsaddr_t nexthop, double expire_time) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::rt_update\n");
+  fclose(fp);
+
 
      rt->rt_seqno = seqnum;
      rt->rt_hops = metric;
@@ -412,6 +509,11 @@ AODV::rt_update(aodv_rt_entry *rt, u_int32_t seqnum, u_int16_t metric,
 
 void
 AODV::rt_down(aodv_rt_entry *rt) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::rt_down\n");
+  fclose(fp);
+
   /*
    *  Make sure that you don't "down" a route more than once.
    */
@@ -435,6 +537,11 @@ AODV::rt_down(aodv_rt_entry *rt) {
 
 void
 AODV::rt_resolve(Packet *p) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::rt_resolve\n");
+  fclose(fp);
+
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 aodv_rt_entry *rt;
@@ -492,6 +599,10 @@ aodv_rt_entry *rt;
    re->DestCount += 1;
 #ifdef DEBUG
    fprintf(stderr, "%s: sending RERR...\n", __FUNCTION__);
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%s: sending RERR...\n", __FUNCTION__);
+      fclose(fpdebug);
 #endif
    sendError(rerr, false);
 
@@ -502,6 +613,11 @@ aodv_rt_entry *rt;
 
 void
 AODV::rt_purge() {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::rt_purge\n");
+  fclose(fp);
+
 aodv_rt_entry *rt, *rtn;
 double now = CURRENT_TIME;
 double delay = 0.0;
@@ -517,6 +633,12 @@ Packet *p;
 #ifdef DEBUG
        fprintf(stderr, "%s: calling drop()\n",
                        __FUNCTION__);
+
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%s: calling drop()\n",
+                       __FUNCTION__);
+      fclose(fpdebug);
 #endif // DEBUG
        drop(p, DROP_RTR_NO_ROUTE);
      }
@@ -555,6 +677,11 @@ Packet *p;
 
 void
 AODV::recv(Packet *p, Handler*) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::recv\n");
+  fclose(fp);
+
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 
@@ -616,6 +743,11 @@ else if(ih->saddr() == index) {
 
 void
 AODV::recvAODV(Packet *p) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::recvAODV\n");
+  fclose(fp);
+
  struct hdr_aodv *ah = HDR_AODV(p);
 
  assert(HDR_IP (p)->sport() == RT_PORT);
@@ -652,6 +784,11 @@ AODV::recvAODV(Packet *p) {
 
 void
 AODV::recvRequest(Packet *p) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::recvRequest\n");
+  fclose(fp);
+
 struct hdr_ip *ih = HDR_IP(p);
 struct hdr_aodv_request *rq = HDR_AODV_REQUEST(p);
 aodv_rt_entry *rt;
@@ -664,7 +801,12 @@ aodv_rt_entry *rt;
 
   if(rq->rq_src == index) {
 #ifdef DEBUG
-    fprintf(stderr, "%s: got my own REQUEST\n", __FUNCTION__);
+    fprintf(stderr, "%s: got my own REQUEST at %2.f\n", __FUNCTION__, CURRENT_TIME);
+
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%s: got my own REQUEST at %2.f\n", __FUNCTION__, CURRENT_TIME);
+      fclose(fpdebug);
 #endif // DEBUG
     Packet::free(p);
     return;
@@ -673,7 +815,12 @@ aodv_rt_entry *rt;
  if (id_lookup(rq->rq_src, rq->rq_bcast_id)) {
 
 #ifdef DEBUG
-   fprintf(stderr, "%s: discarding request\n", __FUNCTION__);
+   fprintf(stderr, "%s: discarding request at %2.f\n", __FUNCTION__, CURRENT_TIME);
+
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%s: discarding request %2.f\n", __FUNCTION__, CURRENT_TIME);
+      fclose(fpdebug);
 #endif // DEBUG
  
    Packet::free(p);
@@ -748,8 +895,14 @@ rt_update(rt0, rq->rq_src_seqno, rq->rq_hop_count, ih->saddr(),
  if(rq->rq_dst == index) {
 
 #ifdef DEBUG
-   fprintf(stderr, "%d - %s: destination sending reply\n",
-                   index, __FUNCTION__);
+   fprintf(stderr, "%d - %s: destination sending reply at %2.f\n",
+                   index, __FUNCTION__, CURRENT_TIME);
+
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%d - %s: destination sending reply at %2.f\n",
+                   index, __FUNCTION__, CURRENT_TIME);
+      fclose(fpdebug);
 #endif // DEBUG
 
                
@@ -822,6 +975,11 @@ rt_update(rt0, rq->rq_src_seqno, rq->rq_hop_count, ih->saddr(),
 
 void
 AODV::recvReply(Packet *p) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::recvReply\n");
+  fclose(fp);
+
 //struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 struct hdr_aodv_reply *rp = HDR_AODV_REPLY(p);
@@ -830,7 +988,11 @@ char suppress_reply = 0;
 double delay = 0.0;
 	
 #ifdef DEBUG
- fprintf(stderr, "%d - %s: received a REPLY\n", index, __FUNCTION__);
+ fprintf(stderr, "%d - %s: received a REPLY at %2.f\n", index, __FUNCTION__, CURRENT_TIME);
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%d - %s: received a REPLY at %2.f\n", index, __FUNCTION__, CURRENT_TIME);
+      fclose(fpdebug);
 #endif // DEBUG
 
 
@@ -927,7 +1089,11 @@ aodv_rt_entry *rt0 = rtable.rt_lookup(ih->daddr());
    else {
    // I don't know how to forward .. drop the reply. 
 #ifdef DEBUG
-     fprintf(stderr, "%s: dropping Route Reply\n", __FUNCTION__);
+     fprintf(stderr, "%s: dropping Route Reply at %2.f\n", __FUNCTION__, CURRENT_TIME);
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%s: dropping Route Reply at %2.f\n", __FUNCTION__, CURRENT_TIME);
+      fclose(fpdebug);
 #endif // DEBUG
      drop(p, DROP_RTR_NO_ROUTE);
    }
@@ -937,6 +1103,11 @@ aodv_rt_entry *rt0 = rtable.rt_lookup(ih->daddr());
 
 void
 AODV::recvError(Packet *p) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::recvError\n");
+  fclose(fp);
+
 struct hdr_ip *ih = HDR_IP(p);
 struct hdr_aodv_error *re = HDR_AODV_ERROR(p);
 aodv_rt_entry *rt;
@@ -959,6 +1130,14 @@ struct hdr_aodv_error *nre = HDR_AODV_ERROR(rerr);
 		     index, rt->rt_dst, rt->rt_seqno, rt->rt_nexthop,
 		     re->unreachable_dst[i],re->unreachable_dst_seqno[i],
 	             ih->saddr());
+
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%s(%f): %d\t(%d\t%u\t%d)\t(%d\t%u\t%d)\n", __FUNCTION__,CURRENT_TIME,
+         index, rt->rt_dst, rt->rt_seqno, rt->rt_nexthop,
+         re->unreachable_dst[i],re->unreachable_dst_seqno[i],
+               ih->saddr());
+      fclose(fpdebug);
 #endif // DEBUG
      	rt->rt_seqno = re->unreachable_dst_seqno[i];
      	rt_down(rt);
@@ -982,6 +1161,10 @@ struct hdr_aodv_error *nre = HDR_AODV_ERROR(rerr);
  if (nre->DestCount > 0) {
 #ifdef DEBUG
    fprintf(stderr, "%s(%f): %d\t sending RERR...\n", __FUNCTION__, CURRENT_TIME, index);
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%s(%f): %d\t sending RERR...\n", __FUNCTION__, CURRENT_TIME, index);
+      fclose(fpdebug);
 #endif // DEBUG
    sendError(rerr);
  }
@@ -999,6 +1182,11 @@ struct hdr_aodv_error *nre = HDR_AODV_ERROR(rerr);
 
 void
 AODV::forward(aodv_rt_entry *rt, Packet *p, double delay) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::forward\n");
+  fclose(fp);
+
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 
@@ -1006,6 +1194,10 @@ struct hdr_ip *ih = HDR_IP(p);
 
 #ifdef DEBUG
   fprintf(stderr, "%s: calling drop()\n", __PRETTY_FUNCTION__);
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "%s: calling drop()\n", __PRETTY_FUNCTION__);
+      fclose(fpdebug);
 #endif // DEBUG
  
   drop(p, DROP_RTR_TTL);
@@ -1061,6 +1253,11 @@ if (ih->daddr() == (nsaddr_t) IP_BROADCAST) {
 
 void
 AODV::sendRequest(nsaddr_t dst) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::sendRequest\n");
+  fclose(fp);
+
 // Allocate a RREQ packet 
 Packet *p = Packet::alloc();
 struct hdr_cmn *ch = HDR_CMN(p);
@@ -1102,8 +1299,12 @@ aodv_rt_entry *rt = rtable.rt_lookup(dst);
  }
 
 #ifdef DEBUG
-   fprintf(stderr, "(%2d) - %2d sending Route Request, dst: %d\n",
-                    ++route_request, index, rt->rt_dst);
+   fprintf(stderr, "(%2d) - %2d sending Route Request, dst: %d at %.2f\n",
+                    ++route_request, index, rt->rt_dst, Scheduler::instance().clock());
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "(%2d) - %2d sending Route Request, dst: %d at %.2f\n",
+                    ++route_request, index, rt->rt_dst, Scheduler::instance().clock());
 #endif // DEBUG
 
  // Determine the TTL to be used this time. 
@@ -1145,10 +1346,17 @@ aodv_rt_entry *rt = rtable.rt_lookup(dst);
  rt->rt_expire = 0;
 
 #ifdef DEBUG
- fprintf(stderr, "(%2d) - %2d sending Route Request, dst: %d, tout %f ms\n",
+ fprintf(stderr, "(%2d) - %2d sending Route Request, dst: %d, tout %f ms at %2.f\n",
 	         ++route_request, 
 		 index, rt->rt_dst, 
-		 rt->rt_req_timeout - CURRENT_TIME);
+		 rt->rt_req_timeout - CURRENT_TIME, Scheduler::instance().clock());
+
+   
+      fprintf(fpdebug, "(%2d) - %2d sending Route Request, dst: %d, tout %f ms at %2.f\n",
+           ++route_request, 
+     index, rt->rt_dst, 
+     rt->rt_req_timeout - CURRENT_TIME, Scheduler::instance().clock());
+      fclose(fpdebug);
 #endif	// DEBUG
 	
 
@@ -1185,6 +1393,11 @@ aodv_rt_entry *rt = rtable.rt_lookup(dst);
 void
 AODV::sendReply(nsaddr_t ipdst, u_int32_t hop_count, nsaddr_t rpdst,
                 u_int32_t rpseq, u_int32_t lifetime, double timestamp) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::sendReply\n");
+  fclose(fp);
+
 Packet *p = Packet::alloc();
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
@@ -1193,6 +1406,10 @@ aodv_rt_entry *rt = rtable.rt_lookup(ipdst);
 
 #ifdef DEBUG
 fprintf(stderr, "sending Reply from %d at %.2f\n", index, Scheduler::instance().clock());
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "sending Reply from %d at %.2f\n", index, Scheduler::instance().clock());
+      fclose(fpdebug);
 #endif // DEBUG
  assert(rt);
 
@@ -1227,12 +1444,21 @@ fprintf(stderr, "sending Reply from %d at %.2f\n", index, Scheduler::instance().
 
 void
 AODV::sendError(Packet *p, bool jitter) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::sendError\n");
+  fclose(fp);
+
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 struct hdr_aodv_error *re = HDR_AODV_ERROR(p);
     
 #ifdef ERROR
 fprintf(stderr, "sending Error from %d at %.2f\n", index, Scheduler::instance().clock());
+
+   FILE *fpdebug = fopen("debug.log","a+");
+      fprintf(fpdebug, "sending Error from %d at %.2f\n", index, Scheduler::instance().clock());
+      fclose(fpdebug);
 #endif // DEBUG
 
  re->re_type = AODVTYPE_RERR;
@@ -1270,6 +1496,11 @@ fprintf(stderr, "sending Error from %d at %.2f\n", index, Scheduler::instance().
 
 void
 AODV::sendHello() {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::sendHello\n");
+  fclose(fp);
+
 Packet *p = Packet::alloc();
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
@@ -1277,6 +1508,10 @@ struct hdr_aodv_reply *rh = HDR_AODV_REPLY(p);
 
 #ifdef DEBUG
 fprintf(stderr, "sending Hello from %d at %.2f\n", index, Scheduler::instance().clock());
+
+   //FILE *fpdebug = fopen("debug.log","a+");
+   //   fprintf(fpdebug, "sending Hello from %d at %.2f\n", index, Scheduler::instance().clock());
+   //   fclose(fpdebug);
 #endif // DEBUG
 
  rh->rp_type = AODVTYPE_HELLO;
@@ -1306,6 +1541,11 @@ fprintf(stderr, "sending Hello from %d at %.2f\n", index, Scheduler::instance().
 
 void
 AODV::recvHello(Packet *p) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::recvHello\n");
+  fclose(fp);
+
 //struct hdr_ip *ih = HDR_IP(p);
 struct hdr_aodv_reply *rp = HDR_AODV_REPLY(p);
 AODV_Neighbor *nb;
@@ -1324,6 +1564,11 @@ AODV_Neighbor *nb;
 
 void
 AODV::nb_insert(nsaddr_t id) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::nb_insert\n");
+  fclose(fp);
+
 AODV_Neighbor *nb = new AODV_Neighbor(id);
 
  assert(nb);
@@ -1337,6 +1582,11 @@ AODV_Neighbor *nb = new AODV_Neighbor(id);
 
 AODV_Neighbor*
 AODV::nb_lookup(nsaddr_t id) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::nb_lookup\n");
+  fclose(fp);
+
 AODV_Neighbor *nb = nbhead.lh_first;
 
  for(; nb; nb = nb->nb_link.le_next) {
@@ -1352,6 +1602,11 @@ AODV_Neighbor *nb = nbhead.lh_first;
  */
 void
 AODV::nb_delete(nsaddr_t id) {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::nb_delete\n");
+  fclose(fp);
+
 AODV_Neighbor *nb = nbhead.lh_first;
 
  log_link_del(id);
@@ -1377,6 +1632,11 @@ AODV_Neighbor *nb = nbhead.lh_first;
  */
 void
 AODV::nb_purge() {
+  
+  FILE *fp = fopen("trace.log","a+");
+  fprintf(fp, "AODV::nb_purge\n");
+  fclose(fp);
+
 AODV_Neighbor *nb = nbhead.lh_first;
 AODV_Neighbor *nbn;
 double now = CURRENT_TIME;
