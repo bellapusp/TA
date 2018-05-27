@@ -2,6 +2,10 @@ if [ -f trace.log ]
 then
 rm trace.log
 fi
+if [ -f nbmylist.txt ]
+then
+rm nbmylist.txt
+fi
 if [ -f debug.log ]
 then
 rm debug.log
