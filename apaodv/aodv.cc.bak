@@ -46,7 +46,6 @@ The AODV code developed by the CMU/MONARCH group was optimized and tuned by Sami
 static int route_request = 0;
 #endif
 
-int flag_RREQ[50] = { 0 };
 
 /*
   TCL Hooks
