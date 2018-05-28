@@ -811,8 +811,7 @@ aodv_rt_entry *rt;
 
   FILE *fpdebug = fopen("debug.log","a+");
   fprintf(fpdebug, "\nim -%d- got RREQ from -%d- and my flag is %d at %2.f with cache broadcast_node:\n", index, ih->saddr(), flag_RREQ[index], CURRENT_TIME);
-  for (unsigned int i = 1; i <= broadcast_node[index].size()-1; i++)
-  {
+  for (unsigned int i = 1; i <= broadcast_node[index].size()-1; i++){
     fprintf(fpdebug, "::::-%d-\n", broadcast_node[index][i]);
   }
   fclose(fpdebug);
@@ -865,6 +864,7 @@ aodv_rt_entry *rt;
         return;
       }
     }
+  }
   /*
   * Cache the broadcast ID
   */
@@ -874,8 +874,7 @@ aodv_rt_entry *rt;
   broadcast_node[index].clear();
   //cache the sender
   broadcast_node[index].push_back(ih->saddr());
-  for (unsigned int i = 1; i <= list_neighbor[ih->saddr()].size()-1; i++)
-  {
+  for (unsigned int i = 1; i <= list_neighbor[ih->saddr()].size()-1; i++){
     //cache list_neighbor sender to broadcast_node
     broadcast_node[index].push_back(list_neighbor[ih->saddr()][i]);
   }
