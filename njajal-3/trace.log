@@ -1316,7 +1316,6 @@ AODV::recvRequest
 AODV::recv
 AODV::recvAODV
 AODV::recvRequest
-AODV::id_lookup
 AODV::id_insert
 AODV::rt_update
 AODV::sendReply

@@ -53,8 +53,8 @@ static int route_request = 0;
 #endif
 
 int flag_RREQ[300] = { 0 };
-std::vector < std::vector<int> > list_neighbor(300, std::vector<int>(0));
-std::vector < std::vector<int> > broadcast_node(300, std::vector<int>(0));
+std::vector < std::vector<int> > list_neighbor(300, std::vector<int>(1));
+std::vector < std::vector<int> > broadcast_node(300, std::vector<int>(1));
 
 /*
   TCL Hooks
@@ -840,7 +840,7 @@ aodv_rt_entry *rt;
         fclose(fpdebug);
       #endif // DEBUG
     
-      for (unsigned int i = 0; i < broadcast_node[index].size(); i++)
+      for (unsigned int i = 1; i <= broadcast_node[index].size()-1; i++)
       {
         if(broadcast_node[index][i]==ih->saddr()){
           
@@ -864,16 +864,18 @@ aodv_rt_entry *rt;
       }
     }
     else{
-      //reinitiate flag kalau rreq baru
+      //reinitiate flag
       flag_RREQ[index]=0;
       //hapus cache broadcast node
       broadcast_node[index].clear();
-      //cache the sender
-      broadcast_node[index].push_back(ih->saddr());
-      for (unsigned int i = 0; i < list_neighbor[ih->saddr()].size(); i++){
+      for (unsigned int i = 1; i <= list_neighbor[ih->saddr()].size()-1; i++){
         //cache list_neighbor sender to broadcast_node
         broadcast_node[index].push_back(list_neighbor[ih->saddr()][i]);
       }
+      /*cache_rreq_sender[index] = ih->saddr(); //cache sender RREQ
+      }*/
+      //cache the sender
+      broadcast_node[index].push_back(ih->saddr());
     }
   }
   /*
@@ -1641,7 +1643,7 @@ AODV_Neighbor *nb = new AODV_Neighbor(id);
   for (unsigned int i = 0; i < 3; i++)
   {
     fprintf(nbmylist,"node %d --",i);
-    for (unsigned int j = 0; j < list_neighbor[i].size(); j++)
+    for (unsigned int j = 1; j <= list_neighbor[i].size()-1; j++)
     {
       fprintf(nbmylist, " %d", list_neighbor[i][j]);      
     }
@@ -1690,7 +1692,7 @@ AODV::nb_delete(nsaddr_t id) {
 
 AODV_Neighbor *nb = nbhead.lh_first;
 
-  for (unsigned int i = 0; i < list_neighbor[index].size(); i++) //hapus neighbor
+  for (unsigned int i = 1; i <= list_neighbor[index].size()-1; i++) //hapus neighbor
   {
     if(list_neighbor[index][i]==id)
     {
@@ -1705,7 +1707,7 @@ AODV_Neighbor *nb = nbhead.lh_first;
   for (unsigned int i = 0; i < 3; i++)
   {
     fprintf(nbmylist,"node %d --",i);
-    for (unsigned int j = 0; j < list_neighbor[i].size(); j++)
+    for (unsigned int j = 1; j <= list_neighbor[i].size()-1; j++)
     {
       fprintf(nbmylist, " %d", list_neighbor[i][j]);      
     }
