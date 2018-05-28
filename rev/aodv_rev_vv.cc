@@ -34,28 +34,21 @@ The AODV code developed by the CMU/MONARCH group was optimized and tuned by Sami
 #include <aodv/aodv_packet.h>
 #include <random.h>
 #include <cmu-trace.h>
-#include <iostream>
-#include <vector>
-#include <time.h>
-#include <stdlib.h>
-#include <ctime>
-#include <cstdlib>
+#include <aodv/aodv_rtable.h>
 //#include <energy-model.h>
 
 #define max(a,b)        ( (a) > (b) ? (a) : (b) )
 #define CURRENT_TIME    Scheduler::instance().clock()
+#define n 1000
 
-#define DEBUG
+int countRoute[1000], countNeib[1000];
+//#define DEBUG
 //#define ERROR
 
 #ifdef DEBUG
 static int route_request = 0;
 #endif
 
-int flag_RREQ[300] = { 0 };
-int cache_rreq_sender[300] = { 0 };
-std::vector < std::vector<int> > list_neighbor(300, std::vector<int>(1));
-std::vector < std::vector<int> > broadcast_node(300, std::vector<int>(1));
 
 /*
   TCL Hooks
@@ -67,8 +60,8 @@ static class AODVHeaderClass : public PacketHeaderClass {
 public:
         AODVHeaderClass() : PacketHeaderClass("PacketHeader/AODV",
                                               sizeof(hdr_all_aodv)) {
-    bind_offset(&hdr_aodv::offset_);
-  } 
+	  bind_offset(&hdr_aodv::offset_);
+	} 
 } class_rtProtoAODV_hdr;
 
 static class AODVclass : public TclClass {
@@ -77,18 +70,19 @@ public:
         TclObject* create(int argc, const char*const* argv) {
           assert(argc == 5);
           //return (new AODV((nsaddr_t) atoi(argv[4])));
-    return (new AODV((nsaddr_t) Address::instance().str2addr(argv[4])));
+	  return (new AODV((nsaddr_t) Address::instance().str2addr(argv[4])));
         }
 } class_rtProtoAODV;
 
 
 int
 AODV::command(int argc, const char*const* argv) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::command\n");
+  //print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::command", now);
   fclose(fp);
-
   if(argc == 2) {
   Tcl& tcl = Tcl::instance();
     
@@ -118,7 +112,7 @@ AODV::command(int argc, const char*const* argv) {
     else if(strcmp(argv[1], "log-target") == 0 || strcmp(argv[1], "tracetarget") == 0) {
       logtarget = (Trace*) TclObject::lookup(argv[2]);
       if(logtarget == 0)
-  return TCL_ERROR;
+	return TCL_ERROR;
       return TCL_OK;
     }
     else if(strcmp(argv[1], "drop-target") == 0) {
@@ -130,17 +124,17 @@ AODV::command(int argc, const char*const* argv) {
     ifqueue = (PriQueue*) TclObject::lookup(argv[2]);
       
       if(ifqueue == 0)
-  return TCL_ERROR;
+	return TCL_ERROR;
       return TCL_OK;
     }
     else if (strcmp(argv[1], "port-dmux") == 0) {
-      dmux_ = (PortClassifier *)TclObject::lookup(argv[2]);
-  if (dmux_ == 0) {
-    fprintf (stderr, "%s: %s lookup of %s failed\n", __FILE__,
-    argv[1], argv[2]);
-    return TCL_ERROR;
-  }
-  return TCL_OK;
+    	dmux_ = (PortClassifier *)TclObject::lookup(argv[2]);
+	if (dmux_ == 0) {
+		fprintf (stderr, "%s: %s lookup of %s failed\n", __FILE__,
+		argv[1], argv[2]);
+		return TCL_ERROR;
+	}
+	return TCL_OK;
     }
   }
   return Agent::command(argc, argv);
@@ -151,13 +145,8 @@ AODV::command(int argc, const char*const* argv) {
 */
 
 AODV::AODV(nsaddr_t id) : Agent(PT_AODV),
-        btimer(this), htimer(this), ntimer(this), 
-        rtimer(this), lrtimer(this), rqueue() {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::AODV\n");
-  fclose(fp);
-
+			  btimer(this), htimer(this), ntimer(this), 
+			  rtimer(this), lrtimer(this), rqueue() {
  
                 
   index = id;
@@ -177,9 +166,11 @@ AODV::AODV(nsaddr_t id) : Agent(PT_AODV),
 
 void
 BroadcastTimer::handle(Event*) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "BroadcastTimer::handle\n");
+  //print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi BroadcastTimer::handle ", now);
   fclose(fp);
 
   agent->id_purge();
@@ -188,9 +179,11 @@ BroadcastTimer::handle(Event*) {
 
 void
 HelloTimer::handle(Event*) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "HelloTimer::handle\n");
+  //print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi HelloTimer::handle ", now);
   fclose(fp);
 
    agent->sendHello();
@@ -202,20 +195,25 @@ HelloTimer::handle(Event*) {
 
 void
 NeighborTimer::handle(Event*) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "NeighborTimer::handle\n");
+  //print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi NeighborTimer::handle ", now);
   fclose(fp);
 
+  
   agent->nb_purge();
   Scheduler::instance().schedule(this, &intr, HELLO_INTERVAL);
 }
 
 void
 RouteCacheTimer::handle(Event*) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "RouteCacheTimer::handle\n");
+  //print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi RouteCacheTimer::handle ", now);
   fclose(fp);
 
   agent->rt_purge();
@@ -225,35 +223,34 @@ RouteCacheTimer::handle(Event*) {
 
 void
 LocalRepairTimer::handle(Event* p)  {  // SRD: 5/4/99
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "LocalRepairTimer::handle\n");
+ //print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi LocalRepairTimer::handle ", now);
   fclose(fp);
 
 aodv_rt_entry *rt;
 struct hdr_ip *ih = HDR_IP( (Packet *)p);
 
    /* you get here after the timeout in a local repair attempt */
-   /* fprintf(stderr, "%s\n", __FUNCTION__); */
+   /*	fprintf(stderr, "%s\n", __FUNCTION__); */
 
 
     rt = agent->rtable.rt_lookup(ih->daddr());
-  
+	
     if (rt && rt->rt_flags != RTF_UP) {
     // route is yet to be repaired
     // I will be conservative and bring down the route
     // and send route errors upstream.
     /* The following assert fails, not sure why */
     /* assert (rt->rt_flags == RTF_IN_REPAIR); */
-    
+		
       //rt->rt_seqno++;
       agent->rt_down(rt);
       // send RERR
 #ifdef DEBUG
       fprintf(stderr,"Dst - %d, failed local repair\n", rt->rt_dst);
-      FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "Dst - %d, failed local repair\n", rt->rt_dst);
-      fclose(fpdebug);
 #endif      
     }
     Packet::free((Packet *)p);
@@ -267,9 +264,11 @@ struct hdr_ip *ih = HDR_IP( (Packet *)p);
 
 void
 AODV::id_insert(nsaddr_t id, u_int32_t bid) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::id_insert\n");
+//print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::id_insert ", now);
   fclose(fp);
 
 BroadcastID *b = new BroadcastID(id, bid);
@@ -282,9 +281,11 @@ BroadcastID *b = new BroadcastID(id, bid);
 /* SRD */
 bool
 AODV::id_lookup(nsaddr_t id, u_int32_t bid) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::id_lookup\n");
+//print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::id_lookup ", now);
   fclose(fp);
 
 BroadcastID *b = bihead.lh_first;
@@ -299,11 +300,12 @@ BroadcastID *b = bihead.lh_first;
 
 void
 AODV::id_purge() {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::id_purge\n");
+//print fungsi
+  double now2 = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::id_purge ", now2);
   fclose(fp);
-
 BroadcastID *b = bihead.lh_first;
 BroadcastID *bn;
 double now = CURRENT_TIME;
@@ -323,17 +325,18 @@ double now = CURRENT_TIME;
 
 double
 AODV::PerHopTime(aodv_rt_entry *rt) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::PerHopTime\n");
+//print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::PerHopTime ", now);
   fclose(fp);
-
 int num_non_zero = 0, i;
 double total_latency = 0.0;
 
  if (!rt)
    return ((double) NODE_TRAVERSAL_TIME );
-  
+	
  for (i=0; i < MAX_HISTORY; i++) {
    if (rt->rt_disc_latency[i] > 0.0) {
       num_non_zero++;
@@ -353,11 +356,12 @@ double total_latency = 0.0;
 
 static void
 aodv_rt_failed_callback(Packet *p, void *arg) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "aodv_rt_failed_callback\n");
+  //print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi aodv_rt_failed_callback ", now);
   fclose(fp);
-
   ((AODV*) arg)->rt_ll_failed(p);
 }
 
@@ -366,11 +370,12 @@ aodv_rt_failed_callback(Packet *p, void *arg) {
  */
 void
 AODV::rt_ll_failed(Packet *p) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::rt_ll_failed\n");
+  //print fungsi
+  double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi rt_ll_failed ", now);
   fclose(fp);
-
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 aodv_rt_entry *rt;
@@ -389,7 +394,7 @@ nsaddr_t broken_nbr = ch->next_hop_;
     return;
   }
   log_link_broke(p);
-  if((rt = rtable.rt_lookup(ih->daddr())) == 0) {
+	if((rt = rtable.rt_lookup(ih->daddr())) == 0) {
     drop(p, DROP_RTR_MAC_CALLBACK);
     return;
   }
@@ -406,8 +411,8 @@ nsaddr_t broken_nbr = ch->next_hop_;
     // queue the packets for which local repair is done, 
     return;
   }
-  else  
-#endif // LOCAL REPAIR  
+  else	
+#endif // LOCAL REPAIR	
 
   {
     drop(p, DROP_RTR_MAC_CALLBACK);
@@ -415,7 +420,7 @@ nsaddr_t broken_nbr = ch->next_hop_;
     // broken link -Mahesh
 while((p = ifqueue->filter(broken_nbr))) {
      drop(p, DROP_RTR_MAC_CALLBACK);
-    } 
+    }	
     nb_delete(broken_nbr);
   }
 
@@ -424,11 +429,11 @@ while((p = ifqueue->filter(broken_nbr))) {
 
 void
 AODV::handle_link_failure(nsaddr_t id) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::handle_link_failure\n");
+ double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::handle_link_failure ", now);
   fclose(fp);
-
 aodv_rt_entry *rt, *rtn;
 Packet *rerr = Packet::alloc();
 struct hdr_aodv_error *re = HDR_AODV_ERROR(rerr);
@@ -444,14 +449,8 @@ struct hdr_aodv_error *re = HDR_AODV_ERROR(rerr);
      re->unreachable_dst_seqno[re->DestCount] = rt->rt_seqno;
 #ifdef DEBUG
      fprintf(stderr, "%s(%f): %d\t(%d\t%u\t%d)\n", __FUNCTION__, CURRENT_TIME,
-         index, re->unreachable_dst[re->DestCount],
-         re->unreachable_dst_seqno[re->DestCount], rt->rt_nexthop);
-
-     FILE *fpdebug = fopen("debug.log","a+");
-     fprintf(fpdebug, "%s(%f): %d\t(%d\t%u\t%d)\n", __FUNCTION__, CURRENT_TIME,
-         index, re->unreachable_dst[re->DestCount],
-         re->unreachable_dst_seqno[re->DestCount], rt->rt_nexthop);
-     fclose(fpdebug);
+		     index, re->unreachable_dst[re->DestCount],
+		     re->unreachable_dst_seqno[re->DestCount], rt->rt_nexthop);
 #endif // DEBUG
      re->DestCount += 1;
      rt_down(rt);
@@ -463,10 +462,6 @@ struct hdr_aodv_error *re = HDR_AODV_ERROR(rerr);
  if (re->DestCount > 0) {
 #ifdef DEBUG
    fprintf(stderr, "%s(%f): %d\tsending RERR...\n", __FUNCTION__, CURRENT_TIME, index);
-
-   FILE *fpdebug = fopen("debug.log","a+");
-   fprintf(fpdebug, "%s(%f): %d\tsending RERR...\n", __FUNCTION__, CURRENT_TIME, index);
-   fclose(fpdebug);
 #endif // DEBUG
    sendError(rerr, false);
  }
@@ -477,17 +472,13 @@ struct hdr_aodv_error *re = HDR_AODV_ERROR(rerr);
 
 void
 AODV::local_rt_repair(aodv_rt_entry *rt, Packet *p) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::local_rt_repair\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::local_rt_repair ", now);
   fclose(fp);
-
 #ifdef DEBUG
   fprintf(stderr,"%s: Dst - %d\n", __FUNCTION__, rt->rt_dst); 
-  
-  FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s: Dst - %d\n", __FUNCTION__, rt->rt_dst);
-      fclose(fpdebug);
 #endif  
   // Buffer the packet 
   rqueue.enque(p);
@@ -503,34 +494,46 @@ AODV::local_rt_repair(aodv_rt_entry *rt, Packet *p) {
 
 void
 AODV::rt_update(aodv_rt_entry *rt, u_int32_t seqnum, u_int16_t metric,
-          nsaddr_t nexthop, double expire_time) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::rt_update\n");
+	       	nsaddr_t nexthop, double expire_time) {
+countRoute[index] = countRoute[index] + 1;
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::rt_update di node %d jml routing table %d", now,index,countRoute[index]);
   fclose(fp);
-
 
      rt->rt_seqno = seqnum;
      rt->rt_hops = metric;
      rt->rt_flags = RTF_UP;
      rt->rt_nexthop = nexthop;
      rt->rt_expire = expire_time;
+     rtable.rt_display(index);
 }
 
 void
 AODV::rt_down(aodv_rt_entry *rt) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::rt_down\n");
-  fclose(fp);
+	
 
   /*
    *  Make sure that you don't "down" a route more than once.
    */
 
   if(rt->rt_flags == RTF_DOWN) {
+	 double now = Scheduler::instance().clock(); // get the time
+  
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::rt_down di node %d jml routing table %d tidak dihapus", now,index,countRoute[index] );
+  fclose(fp);
     return;
   }
+  countRoute[index] = countRoute[index] - 1;
+  double now = Scheduler::instance().clock(); // get the time
+  
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::rt_down di node %d jml routing table %d ", now,index,countRoute[index] );
+  fclose(fp);
 
   // assert (rt->rt_seqno%2); // is the seqno odd?
   rt->rt_last_hop_count = rt->rt_hops;
@@ -547,11 +550,11 @@ AODV::rt_down(aodv_rt_entry *rt) {
 
 void
 AODV::rt_resolve(Packet *p) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::rt_resolve\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::rt_resolve ", now);
   fclose(fp);
-
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 aodv_rt_entry *rt;
@@ -562,15 +565,15 @@ aodv_rt_entry *rt;
   */
  ch->xmit_failure_ = aodv_rt_failed_callback;
  ch->xmit_failure_data_ = (void*) this;
-  rt = rtable.rt_lookup(ih->daddr());
+	rt = rtable.rt_lookup(ih->daddr());
  if(rt == 0) {
-    rt = rtable.rt_add(ih->daddr());
+	  rt = rtable.rt_add(ih->daddr());
  }
 
  /*
   * If the route is up, forward the packet 
   */
-  
+	
  if(rt->rt_flags == RTF_UP) {
    assert(rt->rt_hops != INFINITY2);
    forward(rt, p, NO_DELAY);
@@ -578,12 +581,12 @@ aodv_rt_entry *rt;
  /*
   *  if I am the source of the packet, then do a Route Request.
   */
-  else if(ih->saddr() == index) {
+	else if(ih->saddr() == index) {
    rqueue.enque(p);
    sendRequest(rt->rt_dst);
  }
  /*
-  * A local repair is in progress. Buffer the packet. 
+  *	A local repair is in progress. Buffer the packet. 
   */
  else if (rt->rt_flags == RTF_IN_REPAIR) {
    rqueue.enque(p);
@@ -600,7 +603,7 @@ aodv_rt_entry *rt;
   * For now, drop the packet and send error upstream.
   * Now the route errors are broadcast to upstream
   * neighbors - Mahesh 09/11/99
-  */  
+  */	
  
    assert (rt->rt_flags == RTF_DOWN);
    re->DestCount = 0;
@@ -609,10 +612,6 @@ aodv_rt_entry *rt;
    re->DestCount += 1;
 #ifdef DEBUG
    fprintf(stderr, "%s: sending RERR...\n", __FUNCTION__);
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s: sending RERR...\n", __FUNCTION__);
-      fclose(fpdebug);
 #endif
    sendError(rerr, false);
 
@@ -623,11 +622,11 @@ aodv_rt_entry *rt;
 
 void
 AODV::rt_purge() {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::rt_purge\n");
+double now2 = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::rt_purge ", now2);
   fclose(fp);
-
 aodv_rt_entry *rt, *rtn;
 double now = CURRENT_TIME;
 double delay = 0.0;
@@ -636,19 +635,14 @@ Packet *p;
  for(rt = rtable.head(); rt; rt = rtn) {  // for each rt entry
    rtn = rt->rt_link.le_next;
    if ((rt->rt_flags == RTF_UP) && (rt->rt_expire < now)) {
+	  
    // if a valid route has expired, purge all packets from 
    // send buffer and invalidate the route.                    
-  assert(rt->rt_hops != INFINITY2);
+	assert(rt->rt_hops != INFINITY2);
      while((p = rqueue.deque(rt->rt_dst))) {
 #ifdef DEBUG
        fprintf(stderr, "%s: calling drop()\n",
                        __FUNCTION__);
-
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s: calling drop()\n",
-                       __FUNCTION__);
-      fclose(fpdebug);
 #endif // DEBUG
        drop(p, DROP_RTR_NO_ROUTE);
      }
@@ -687,11 +681,11 @@ Packet *p;
 
 void
 AODV::recv(Packet *p, Handler*) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::recv\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::recv ", now);
   fclose(fp);
-
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 
@@ -753,11 +747,11 @@ else if(ih->saddr() == index) {
 
 void
 AODV::recvAODV(Packet *p) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::recvAODV\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::recvAODV ", now);
   fclose(fp);
-
  struct hdr_aodv *ah = HDR_AODV(p);
 
  assert(HDR_IP (p)->sport() == RT_PORT);
@@ -794,14 +788,35 @@ AODV::recvAODV(Packet *p) {
 
 void
 AODV::recvRequest(Packet *p) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::recvRequest\n");
-  fclose(fp);
+//modified AODV calculate neighbor
+  Node* m_node = Node::get_node_by_address(this->addr());
+  neighbor_list_node* my_mobile_neighbor_list;
+  my_mobile_neighbor_list = m_node->neighbor_list_;
+  int count = 0;
 
+  //cout<<"Node id : " <<index<<endl;
+  while(my_mobile_neighbor_list)
+  {
+      //cout<<"Neighbor ID:"<<my_mobile_neighbor_list->nodeid<<endl;
+      count++;
+      if(my_mobile_neighbor_list->next){
+          my_mobile_neighbor_list=my_mobile_neighbor_list->next;
+      }
+      else{
+          //cout<<"## Jumlah: "<<count<<endl;
+          //cout<<"## Jumlah: "<<nb_node()<<endl;
+          break;
+      }
+  }
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::recvRequest pada node %d jml routing table %d jml tetangga %d ", now,index,countRoute[index],countNeib[index]);
+  fclose(fp);
 struct hdr_ip *ih = HDR_IP(p);
 struct hdr_aodv_request *rq = HDR_AODV_REQUEST(p);
 aodv_rt_entry *rt;
+
 
   /*
    * Drop if:
@@ -809,90 +824,37 @@ aodv_rt_entry *rt;
    *      - I recently heard this request.
    */
 
-  FILE *fpdebug = fopen("debug.log","a+");
-  fprintf(fpdebug, "\nim -%d- got RREQ from -%d- and my flag is %d at %2.f with cache broadcast_node:\n", index, ih->saddr(), flag_RREQ[index], CURRENT_TIME);
-  for (unsigned int i = 1; i <= broadcast_node[index].size()-1; i++)
-  {
-    fprintf(fpdebug, "::::-%d-\n", broadcast_node[index][i]);
-  }
-  fclose(fpdebug);
+  if(rq->rq_src == index) {
+#ifdef DEBUG
+    fprintf(stderr, "%s: got my own REQUEST\n", __FUNCTION__);
+#endif // DEBUG
+	fp = fopen("fungsidipanggil.txt", "a");
+	fprintf(fp, "\n %f fungsi AODV::recvRequest pada node %d paket keluar sebelum if", now,index);
+	fclose(fp);
+    Packet::free(p);
+    return;
+  } 
 
-  if(rq->rq_dst != index) {
-    if(rq->rq_src == index) {
-      #ifdef DEBUG
-        fprintf(stderr, "%s: got my own REQUEST at %2.f\n", __FUNCTION__, CURRENT_TIME);
+ if (id_lookup(rq->rq_src, rq->rq_bcast_id)) {
 
-
-        FILE *fpdebug = fopen("debug.log","a+");
-        fprintf(fpdebug, "%s: got my own REQUEST at %2.f\n", __FUNCTION__, CURRENT_TIME);
-        fclose(fpdebug);
-      #endif // DEBUG
-        
-      Packet::free(p);
-      return;
-    }
-
-    if (id_lookup(rq->rq_src, rq->rq_bcast_id)) {
-      //kalau saya pernah denger RREQ sejenis ini
-      #ifdef DEBUG
-        fprintf(stderr, "%s: I recently heard this request %2.f\n", __FUNCTION__, CURRENT_TIME);
-
-        FILE *fpdebug = fopen("debug.log","a+");
-        fprintf(fpdebug, "\n%s: I recently heard this request and my flag is %d at %2.f\n", __FUNCTION__, flag_RREQ[index], CURRENT_TIME);
-        fclose(fpdebug);
-      #endif // DEBUG
-    
-      for (unsigned int i = 1; i <= broadcast_node[index].size()-1; i++)
-      {
-        if(broadcast_node[index][i]==ih->saddr()){
-          
-          fopen("debug.log","a+");
-          fprintf(fpdebug, "\n%s: drop packet coz node(%d) broadcast_node node(%d) at %2.f\n", __FUNCTION__, ih->saddr(), index, CURRENT_TIME);
-          fclose(fpdebug);
-
-          Packet::free(p);
-          return;
-        }
-      }
-
-      flag_RREQ[index]++; //tambah flag
-
-      if(flag_RREQ[index]<2){
-        flag_RREQ[index]++;
-      }
-      else{
-        Packet::free(p);
-        return;
-      }
-    }
-  /*
+#ifdef DEBUG
+   fprintf(stderr, "%s: discarding request\n", __FUNCTION__);
+#endif // DEBUG
+	fp = fopen("fungsidipanggil.txt", "a");
+	fprintf(fp, "\n %f fungsi AODV::recvRequest pada node %d paket keluar sebelum if", now,index);
+	fclose(fp);
+ 
+   Packet::free(p);
+   return;
+ }
+ ////////////////MODIFIKASI AODV 
+  
+////////////////////////////
+ /*
   * Cache the broadcast ID
   */
-  id_insert(rq->rq_src, rq->rq_bcast_id);
+ id_insert(rq->rq_src, rq->rq_bcast_id);
 
-  //hapus cache broadcast node
-  broadcast_node[index].clear();
-  //cache the sender
-  broadcast_node[index].push_back(ih->saddr());
-  for (unsigned int i = 1; i <= list_neighbor[ih->saddr()].size()-1; i++)
-  {
-    //cache list_neighbor sender to broadcast_node
-    broadcast_node[index].push_back(list_neighbor[ih->saddr()][i]);
-  }
-  /*cache_rreq_sender[index] = ih->saddr(); //cache sender RREQ
-  }*/
-
-
-  fopen("debug.log","a+");
-  fprintf(fpdebug, "\nim -%d- got RREQ from -%d- at %2.f with cache broadcast_node:\n", index, ih->saddr(), CURRENT_TIME);
-  
-  for (unsigned int i = 1; i <= broadcast_node[index].size()-1; i++)
-  {
-    fprintf(fpdebug, "::::-%d-\n", broadcast_node[index][i]);
-  }
-
-
-  fclose(fpdebug);
 
 
  /* 
@@ -903,20 +865,20 @@ aodv_rt_entry *rt;
  aodv_rt_entry *rt0; // rt0 is the reverse route 
    
    rt0 = rtable.rt_lookup(rq->rq_src);
-   //if(rt0 == 0) { /* if not in the route table */
+   if(rt0 == 0) { /* if not in the route table */
    // create an entry for the reverse route.
      rt0 = rtable.rt_add(rq->rq_src);
-   //}
+   }
   
    rt0->rt_expire = max(rt0->rt_expire, (CURRENT_TIME + REV_ROUTE_LIFE));
 
    if ( (rq->rq_src_seqno > rt0->rt_seqno ) ||
-      ((rq->rq_src_seqno == rt0->rt_seqno) && 
-   (rq->rq_hop_count < rt0->rt_hops)) ) {
+    	((rq->rq_src_seqno == rt0->rt_seqno) && 
+	 (rq->rq_hop_count < rt0->rt_hops)) ) {
    // If we have a fresher seq no. or lesser #hops for the 
    // same seq no., update the rt entry. Else don't bother.
 rt_update(rt0, rq->rq_src_seqno, rq->rq_hop_count, ih->saddr(),
-             max(rt0->rt_expire, (CURRENT_TIME + REV_ROUTE_LIFE)) );
+     	       max(rt0->rt_expire, (CURRENT_TIME + REV_ROUTE_LIFE)) );
      if (rt0->rt_req_timeout > 0.0) {
      // Reset the soft state and 
      // Set expiry time to CURRENT_TIME + ACTIVE_ROUTE_TIMEOUT
@@ -936,7 +898,7 @@ rt_update(rt0, rq->rq_src_seqno, rq->rq_hop_count, ih->saddr(),
      Packet *buffered_pkt;
      while ((buffered_pkt = rqueue.deque(rt0->rt_dst))) {
        if (rt0 && (rt0->rt_flags == RTF_UP)) {
-  assert(rt0->rt_hops != INFINITY2);
+	assert(rt0->rt_hops != INFINITY2);
          forward(rt0, buffered_pkt, NO_DELAY);
        }
      }
@@ -956,14 +918,8 @@ rt_update(rt0, rq->rq_src_seqno, rq->rq_hop_count, ih->saddr(),
  if(rq->rq_dst == index) {
 
 #ifdef DEBUG
-   fprintf(stderr, "%d - %s: destination sending reply at %2.f\n",
-                   index, __FUNCTION__, CURRENT_TIME);
-
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%d - %s: destination sending reply at %2.f\n",
-                   index, __FUNCTION__, CURRENT_TIME);
-      fclose(fpdebug);
+   fprintf(stderr, "%d - %s: destination sending reply\n",
+                   index, __FUNCTION__);
 #endif // DEBUG
 
                
@@ -985,17 +941,17 @@ rt_update(rt0, rq->rq_src_seqno, rq->rq_hop_count, ih->saddr(),
  // I am not the destination, but I may have a fresh enough route.
 
  else if (rt && (rt->rt_hops != INFINITY2) && 
-      (rt->rt_seqno >= rq->rq_dst_seqno) ) {
+	  	(rt->rt_seqno >= rq->rq_dst_seqno) ) {
 
    //assert (rt->rt_flags == RTF_UP);
    assert(rq->rq_dst == rt->rt_dst);
-   //assert ((rt->rt_seqno%2) == 0);  // is the seqno even?
+   //assert ((rt->rt_seqno%2) == 0);	// is the seqno even?
    sendReply(rq->rq_src,
              rt->rt_hops + 1,
              rq->rq_dst,
              rt->rt_seqno,
-       (u_int32_t) (rt->rt_expire - CURRENT_TIME),
-       //             rt->rt_expire - CURRENT_TIME,
+	     (u_int32_t) (rt->rt_expire - CURRENT_TIME),
+	     //             rt->rt_expire - CURRENT_TIME,
              rq->rq_timestamp);
    // Insert nexthops to RREQ source and RREQ destination in the
    // precursor lists of destination and source respectively
@@ -1008,8 +964,8 @@ rt_update(rt0, rq->rq_src_seqno, rq->rq_hop_count, ih->saddr(),
              rq->rq_hop_count,
              rq->rq_src,
              rq->rq_src_seqno,
-       (u_int32_t) (rt->rt_expire - CURRENT_TIME),
-       //             rt->rt_expire - CURRENT_TIME,
+	     (u_int32_t) (rt->rt_expire - CURRENT_TIME),
+	     //             rt->rt_expire - CURRENT_TIME,
              rq->rq_timestamp);
 #endif
    
@@ -1017,7 +973,7 @@ rt_update(rt0, rq->rq_src_seqno, rq->rq_hop_count, ih->saddr(),
    
 // DONE: Included gratuitous replies to be sent as per IETF aodv draft specification. As of now, G flag has not been dynamically used and is always set or reset in aodv-packet.h --- Anant Utgikar, 09/16/02.
 
-  Packet::free(p);
+	Packet::free(p);
  }
  /*
   * Can't reply. So forward the  Route Request
@@ -1036,9 +992,10 @@ rt_update(rt0, rq->rq_src_seqno, rq->rq_hop_count, ih->saddr(),
 
 void
 AODV::recvReply(Packet *p) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::recvReply\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::recvReply ", now);
   fclose(fp);
 
 //struct hdr_cmn *ch = HDR_CMN(p);
@@ -1047,13 +1004,9 @@ struct hdr_aodv_reply *rp = HDR_AODV_REPLY(p);
 aodv_rt_entry *rt;
 char suppress_reply = 0;
 double delay = 0.0;
-  
+	
 #ifdef DEBUG
- fprintf(stderr, "%d - %s: received a REPLY at %2.f\n", index, __FUNCTION__, CURRENT_TIME);
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%d - %s: received a REPLY at %2.f\n", index, __FUNCTION__, CURRENT_TIME);
-      fclose(fpdebug);
+ fprintf(stderr, "%d - %s: received a REPLY\n", index, __FUNCTION__);
 #endif // DEBUG
 
 
@@ -1083,10 +1036,10 @@ double delay = 0.0;
  if ( (rt->rt_seqno < rp->rp_dst_seqno) ||   // newer route 
       ((rt->rt_seqno == rp->rp_dst_seqno) &&  
        (rt->rt_hops > rp->rp_hop_count)) ) { // shorter or better route
-  
+	
   // Update the rt entry 
   rt_update(rt, rp->rp_dst_seqno, rp->rp_hop_count,
-    rp->rp_src, CURRENT_TIME + rp->rp_lifetime);
+		rp->rp_src, CURRENT_TIME + rp->rp_lifetime);
 
   // reset the soft state
   rt->rt_req_cnt = 0;
@@ -1096,12 +1049,12 @@ double delay = 0.0;
 if (ih->daddr() == index) { // If I am the original source
   // Update the route discovery latency statistics
   // rp->rp_timestamp is the time of request origination
-    
+		
     rt->rt_disc_latency[(unsigned char)rt->hist_indx] = (CURRENT_TIME - rp->rp_timestamp)
                                          / (double) rp->rp_hop_count;
     // increment indx for next time
     rt->hist_indx = (rt->hist_indx + 1) % MAX_HISTORY;
-  } 
+  }	
 
   /*
    * Send all packets queued in the sendbuffer destined for
@@ -1150,11 +1103,7 @@ aodv_rt_entry *rt0 = rtable.rt_lookup(ih->daddr());
    else {
    // I don't know how to forward .. drop the reply. 
 #ifdef DEBUG
-     fprintf(stderr, "%s: dropping Route Reply at %2.f\n", __FUNCTION__, CURRENT_TIME);
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s: dropping Route Reply at %2.f\n", __FUNCTION__, CURRENT_TIME);
-      fclose(fpdebug);
+     fprintf(stderr, "%s: dropping Route Reply\n", __FUNCTION__);
 #endif // DEBUG
      drop(p, DROP_RTR_NO_ROUTE);
    }
@@ -1164,11 +1113,11 @@ aodv_rt_entry *rt0 = rtable.rt_lookup(ih->daddr());
 
 void
 AODV::recvError(Packet *p) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::recvError\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::recvError ", now);
   fclose(fp);
-
 struct hdr_ip *ih = HDR_IP(p);
 struct hdr_aodv_error *re = HDR_AODV_ERROR(p);
 aodv_rt_entry *rt;
@@ -1182,50 +1131,38 @@ struct hdr_aodv_error *nre = HDR_AODV_ERROR(rerr);
  // For each unreachable destination
    rt = rtable.rt_lookup(re->unreachable_dst[i]);
    if ( rt && (rt->rt_hops != INFINITY2) &&
-  (rt->rt_nexthop == ih->saddr()) &&
-      (rt->rt_seqno <= re->unreachable_dst_seqno[i]) ) {
-  assert(rt->rt_flags == RTF_UP);
-  assert((rt->rt_seqno%2) == 0); // is the seqno even?
+	(rt->rt_nexthop == ih->saddr()) &&
+     	(rt->rt_seqno <= re->unreachable_dst_seqno[i]) ) {
+	assert(rt->rt_flags == RTF_UP);
+	assert((rt->rt_seqno%2) == 0); // is the seqno even?
 #ifdef DEBUG
      fprintf(stderr, "%s(%f): %d\t(%d\t%u\t%d)\t(%d\t%u\t%d)\n", __FUNCTION__,CURRENT_TIME,
-         index, rt->rt_dst, rt->rt_seqno, rt->rt_nexthop,
-         re->unreachable_dst[i],re->unreachable_dst_seqno[i],
-               ih->saddr());
-
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s(%f): %d\t(%d\t%u\t%d)\t(%d\t%u\t%d)\n", __FUNCTION__,CURRENT_TIME,
-         index, rt->rt_dst, rt->rt_seqno, rt->rt_nexthop,
-         re->unreachable_dst[i],re->unreachable_dst_seqno[i],
-               ih->saddr());
-      fclose(fpdebug);
+		     index, rt->rt_dst, rt->rt_seqno, rt->rt_nexthop,
+		     re->unreachable_dst[i],re->unreachable_dst_seqno[i],
+	             ih->saddr());
 #endif // DEBUG
-      rt->rt_seqno = re->unreachable_dst_seqno[i];
-      rt_down(rt);
+     	rt->rt_seqno = re->unreachable_dst_seqno[i];
+     	rt_down(rt);
 
    // Not sure whether this is the right thing to do
    Packet *pkt;
-  while((pkt = ifqueue->filter(ih->saddr()))) {
-          drop(pkt, DROP_RTR_MAC_CALLBACK);
-      }
+	while((pkt = ifqueue->filter(ih->saddr()))) {
+        	drop(pkt, DROP_RTR_MAC_CALLBACK);
+     	}
 
      // if precursor list non-empty add to RERR and delete the precursor list
-      if (!rt->pc_empty()) {
-        nre->unreachable_dst[nre->DestCount] = rt->rt_dst;
-        nre->unreachable_dst_seqno[nre->DestCount] = rt->rt_seqno;
-        nre->DestCount += 1;
-    rt->pc_delete();
-      }
+     	if (!rt->pc_empty()) {
+     		nre->unreachable_dst[nre->DestCount] = rt->rt_dst;
+     		nre->unreachable_dst_seqno[nre->DestCount] = rt->rt_seqno;
+     		nre->DestCount += 1;
+		rt->pc_delete();
+     	}
    }
  } 
 
  if (nre->DestCount > 0) {
 #ifdef DEBUG
    fprintf(stderr, "%s(%f): %d\t sending RERR...\n", __FUNCTION__, CURRENT_TIME, index);
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s(%f): %d\t sending RERR...\n", __FUNCTION__, CURRENT_TIME, index);
-      fclose(fpdebug);
 #endif // DEBUG
    sendError(rerr);
  }
@@ -1243,11 +1180,11 @@ struct hdr_aodv_error *nre = HDR_AODV_ERROR(rerr);
 
 void
 AODV::forward(aodv_rt_entry *rt, Packet *p, double delay) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::forward\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::forward ", now);
   fclose(fp);
-
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 
@@ -1255,10 +1192,6 @@ struct hdr_ip *ih = HDR_IP(p);
 
 #ifdef DEBUG
   fprintf(stderr, "%s: calling drop()\n", __PRETTY_FUNCTION__);
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s: calling drop()\n", __PRETTY_FUNCTION__);
-      fclose(fpdebug);
 #endif // DEBUG
  
   drop(p, DROP_RTR_TTL);
@@ -1266,10 +1199,10 @@ struct hdr_ip *ih = HDR_IP(p);
  }
 
  if ((( ch->ptype() != PT_AODV && ch->direction() == hdr_cmn::UP ) &&
-  ((u_int32_t)ih->daddr() == IP_BROADCAST))
-    || (ih->daddr() == here_.addr_)) {
-  dmux_->recv(p,0);
-  return;
+	((u_int32_t)ih->daddr() == IP_BROADCAST))
+		|| (ih->daddr() == here_.addr_)) {
+	dmux_->recv(p,0);
+	return;
  }
 
  if (rt) {
@@ -1294,7 +1227,7 @@ if (ih->daddr() == (nsaddr_t) IP_BROADCAST) {
       *  Jitter the sending of AODV broadcast packets by 10ms
       */
      Scheduler::instance().schedule(target_, p,
-                 0.01 * Random::uniform());
+      				   0.01 * Random::uniform());
    } else {
      Scheduler::instance().schedule(target_, p, 0.);  // No jitter
    }
@@ -1314,11 +1247,11 @@ if (ih->daddr() == (nsaddr_t) IP_BROADCAST) {
 
 void
 AODV::sendRequest(nsaddr_t dst) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::sendRequest\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::sendRequest di node %d menuju node %d", now,index,dst);
   fclose(fp);
-
 // Allocate a RREQ packet 
 Packet *p = Packet::alloc();
 struct hdr_cmn *ch = HDR_CMN(p);
@@ -1360,12 +1293,8 @@ aodv_rt_entry *rt = rtable.rt_lookup(dst);
  }
 
 #ifdef DEBUG
-   fprintf(stderr, "(%2d) - %2d sending Route Request, dst: %d at %.2f\n",
-                    ++route_request, index, rt->rt_dst, Scheduler::instance().clock());
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "(%2d) - %2d sending Route Request, dst: %d at %.2f\n",
-                    ++route_request, index, rt->rt_dst, Scheduler::instance().clock());
+   fprintf(stderr, "(%2d) - %2d sending Route Request, dst: %d\n",
+                    ++route_request, index, rt->rt_dst);
 #endif // DEBUG
 
  // Determine the TTL to be used this time. 
@@ -1407,19 +1336,12 @@ aodv_rt_entry *rt = rtable.rt_lookup(dst);
  rt->rt_expire = 0;
 
 #ifdef DEBUG
- fprintf(stderr, "(%2d) - %2d sending Route Request, dst: %d, tout %f ms at %2.f\n",
-           ++route_request, 
-     index, rt->rt_dst, 
-     rt->rt_req_timeout - CURRENT_TIME, Scheduler::instance().clock());
-
-   
-      fprintf(fpdebug, "(%2d) - %2d sending Route Request, dst: %d, tout %f ms at %2.f\n",
-           ++route_request, 
-     index, rt->rt_dst, 
-     rt->rt_req_timeout - CURRENT_TIME, Scheduler::instance().clock());
-      fclose(fpdebug);
-#endif  // DEBUG
-  
+ fprintf(stderr, "(%2d) - %2d sending Route Request, dst: %d, tout %f ms\n",
+	         ++route_request, 
+		 index, rt->rt_dst, 
+		 rt->rt_req_timeout - CURRENT_TIME);
+#endif	// DEBUG
+	
 
  // Fill out the RREQ packet 
  // ch->uid() = 0;
@@ -1454,9 +1376,10 @@ aodv_rt_entry *rt = rtable.rt_lookup(dst);
 void
 AODV::sendReply(nsaddr_t ipdst, u_int32_t hop_count, nsaddr_t rpdst,
                 u_int32_t rpseq, u_int32_t lifetime, double timestamp) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::sendReply\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::sendReply ", now);
   fclose(fp);
 
 Packet *p = Packet::alloc();
@@ -1467,10 +1390,6 @@ aodv_rt_entry *rt = rtable.rt_lookup(ipdst);
 
 #ifdef DEBUG
 fprintf(stderr, "sending Reply from %d at %.2f\n", index, Scheduler::instance().clock());
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "sending Reply from %d at %.2f\n", index, Scheduler::instance().clock());
-      fclose(fpdebug);
 #endif // DEBUG
  assert(rt);
 
@@ -1505,21 +1424,17 @@ fprintf(stderr, "sending Reply from %d at %.2f\n", index, Scheduler::instance().
 
 void
 AODV::sendError(Packet *p, bool jitter) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::sendError\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::sendError ", now);
   fclose(fp);
-
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
 struct hdr_aodv_error *re = HDR_AODV_ERROR(p);
     
 #ifdef ERROR
 fprintf(stderr, "sending Error from %d at %.2f\n", index, Scheduler::instance().clock());
-
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "sending Error from %d at %.2f\n", index, Scheduler::instance().clock());
-      fclose(fpdebug);
 #endif // DEBUG
 
  re->re_type = AODVTYPE_RERR;
@@ -1544,9 +1459,9 @@ fprintf(stderr, "sending Error from %d at %.2f\n", index, Scheduler::instance().
 
  // Do we need any jitter? Yes
  if (jitter)
-  Scheduler::instance().schedule(target_, p, 0.01*Random::uniform());
+ 	Scheduler::instance().schedule(target_, p, 0.01*Random::uniform());
  else
-  Scheduler::instance().schedule(target_, p, 0.0);
+ 	Scheduler::instance().schedule(target_, p, 0.0);
 
 }
 
@@ -1557,11 +1472,11 @@ fprintf(stderr, "sending Error from %d at %.2f\n", index, Scheduler::instance().
 
 void
 AODV::sendHello() {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::sendHello\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::sendHello ", now);
   fclose(fp);
-
 Packet *p = Packet::alloc();
 struct hdr_cmn *ch = HDR_CMN(p);
 struct hdr_ip *ih = HDR_IP(p);
@@ -1569,10 +1484,6 @@ struct hdr_aodv_reply *rh = HDR_AODV_REPLY(p);
 
 #ifdef DEBUG
 fprintf(stderr, "sending Hello from %d at %.2f\n", index, Scheduler::instance().clock());
-
-   //FILE *fpdebug = fopen("debug.log","a+");
-   //   fprintf(fpdebug, "sending Hello from %d at %.2f\n", index, Scheduler::instance().clock());
-   //   fclose(fpdebug);
 #endif // DEBUG
 
  rh->rp_type = AODVTYPE_HELLO;
@@ -1602,17 +1513,26 @@ fprintf(stderr, "sending Hello from %d at %.2f\n", index, Scheduler::instance().
 
 void
 AODV::recvHello(Packet *p) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::recvHello\n");
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::recvHello ", now);
   fclose(fp);
-
 //struct hdr_ip *ih = HDR_IP(p);
 struct hdr_aodv_reply *rp = HDR_AODV_REPLY(p);
 AODV_Neighbor *nb;
 
+//modified AODV calculate neighbor
+  Node *sender_node = Node::get_node_by_address(rp->rp_dst);
+  Node *receiver_node = Node::get_node_by_address(index);
+
+
  nb = nb_lookup(rp->rp_dst);
  if(nb == 0) {
+   //modified AODV calculate neighbor
+    sender_node->addNeighbor(receiver_node);
+    receiver_node->addNeighbor(sender_node);
+
    nb_insert(rp->rp_dst);
  }
  else {
@@ -1625,29 +1545,13 @@ AODV_Neighbor *nb;
 
 void
 AODV::nb_insert(nsaddr_t id) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::nb_insert\n");
+countNeib[index] = countNeib[index] + 1;
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::nb_insert di node %d node tetangga %d jumlah tetangga %d", now,index,id,countNeib[index]);
   fclose(fp);
-
 AODV_Neighbor *nb = new AODV_Neighbor(id);
-
-
-  list_neighbor[index].push_back(id); //tambah neighbor
-
-  FILE *nbmylist;
-  nbmylist = fopen("nbmylist.txt", "a");
-  fprintf(nbmylist, "\n ------------------------\n");
-  for (unsigned int i = 0; i < 3; i++)
-  {
-    fprintf(nbmylist,"node %d --",i);
-    for (unsigned int j = 1; j <= list_neighbor[i].size()-1; j++)
-    {
-      fprintf(nbmylist, " %d", list_neighbor[i][j]);      
-    }
-    fprintf(nbmylist,"\n");
-  }
-  fclose(nbmylist);
 
  assert(nb);
  nb->nb_expire = CURRENT_TIME +
@@ -1655,18 +1559,11 @@ AODV_Neighbor *nb = new AODV_Neighbor(id);
  LIST_INSERT_HEAD(&nbhead, nb, nb_link);
  seqno += 2;             // set of neighbors changed
  assert ((seqno%2) == 0);
-
- 
 }
 
 
 AODV_Neighbor*
 AODV::nb_lookup(nsaddr_t id) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::nb_lookup\n");
-  fclose(fp);
-
 AODV_Neighbor *nb = nbhead.lh_first;
 
  for(; nb; nb = nb->nb_link.le_next) {
@@ -1682,35 +1579,13 @@ AODV_Neighbor *nb = nbhead.lh_first;
  */
 void
 AODV::nb_delete(nsaddr_t id) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::nb_delete\n");
+countNeib[index] = countNeib[index] - 1 ;
+double now = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::nb_delete di node %d menghapus node %d jml tetangga %d", now, index,id,countNeib[index]);
   fclose(fp);
-
 AODV_Neighbor *nb = nbhead.lh_first;
-
-  for (unsigned int i = 1; i <= list_neighbor[index].size()-1; i++) //hapus neighbor
-  {
-    if(list_neighbor[index][i]==id)
-    {
-      list_neighbor[index].erase (list_neighbor[index].begin()+i);
-      break;
-    }
-  }
-
-  FILE *nbmylist;
-  nbmylist = fopen("nbmylist.txt", "a");
-  fprintf(nbmylist, "\n ------------------------\n");
-  for (unsigned int i = 0; i < 3; i++)
-  {
-    fprintf(nbmylist,"node %d --",i);
-    for (unsigned int j = 1; j <= list_neighbor[i].size()-1; j++)
-    {
-      fprintf(nbmylist, " %d", list_neighbor[i][j]);      
-    }
-    fprintf(nbmylist,"\n");
-  }
-  fclose(nbmylist);
 
  log_link_del(id);
  seqno += 2;     // Set of neighbors changed
@@ -1735,11 +1610,11 @@ AODV_Neighbor *nb = nbhead.lh_first;
  */
 void
 AODV::nb_purge() {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::nb_purge\n");
+double now2 = Scheduler::instance().clock(); // get the time
+  FILE *fp;
+  fp = fopen("fungsidipanggil.txt", "a");
+  fprintf(fp, "\n %f fungsi AODV::nb_purge ", now2);
   fclose(fp);
-
 AODV_Neighbor *nb = nbhead.lh_first;
 AODV_Neighbor *nbn;
 double now = CURRENT_TIME;

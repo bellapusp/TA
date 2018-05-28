@@ -6,27 +6,10 @@
 (12) -  0 sending Route Request, dst: 1, tout 5.400000 ms at 16
 (14) -  0 sending Route Request, dst: 1 at 21.50
 (16) -  0 sending Route Request, dst: 1, tout 7.200000 ms at 22
-im -2- got RREQ from -0- and my flag is 0 at 22
-and my cache is 0 at 22
-im -2- got RREQ from -0- and my cache is -0- at 22 with cache neighbor:
--2-
-im -0- got RREQ from -2- and my flag is 0 at 22
-and my cache is 0 at 22
 recvRequest: got my own REQUEST at 22
 (18) -  0 sending Route Request, dst: 1 at 39.00
 (20) -  0 sending Route Request, dst: 1, tout 1.800000 ms at 39
-im -2- got RREQ from -0- and my flag is 0 at 39
-and my cache is 0 at 39
-im -2- got RREQ from -0- and my cache is -0- at 39 with cache neighbor:
--2-
-im -0- got RREQ from -2- and my flag is 0 at 39
-and my cache is 0 at 39
 recvRequest: got my own REQUEST at 39
-im -1- got RREQ from -2- and my flag is 0 at 39
-and my cache is 0 at 39
-im -1- got RREQ from -2- and my cache is -2- at 39 with cache neighbor:
--0-
--1-
 1 - recvRequest: destination sending reply at 39
 sending Reply from 1 at 39.01
 2 - recvReply: received a REPLY at 39
@@ -40,45 +23,21 @@ recvError(147.989837): 1	(0	14	2)	(0	15	2)
 rt_resolve: sending RERR...
 (22) -  1 sending Route Request, dst: 0 at 148.00
 (24) -  1 sending Route Request, dst: 0, tout 0.240000 ms at 148
-im -2- got RREQ from -1- and my flag is 0 at 148
-and my cache is 0 at 148
-im -2- got RREQ from -1- and my cache is -1- at 148 with cache neighbor:
--2-
-im -1- got RREQ from -2- and my flag is 0 at 148
-and my cache is 2 at 148
 recvRequest: got my own REQUEST at 148
 (26) -  0 sending Route Request, dst: 1 at 148.48
 (28) -  0 sending Route Request, dst: 1, tout 0.061085 ms at 148
 (30) -  1 sending Route Request, dst: 0 at 148.50
 (32) -  1 sending Route Request, dst: 0, tout 0.360000 ms at 148
-im -2- got RREQ from -1- and my flag is 0 at 149
-and my cache is 1 at 149
-im -2- got RREQ from -1- and my cache is -1- at 149 with cache neighbor:
--2-
-im -1- got RREQ from -2- and my flag is 0 at 149
-and my cache is 2 at 149
 recvRequest: got my own REQUEST at 149
 (34) -  0 sending Route Request, dst: 1 at 149.00
 (36) -  0 sending Route Request, dst: 1, tout 0.091628 ms at 149
 (38) -  1 sending Route Request, dst: 0 at 149.00
 (40) -  1 sending Route Request, dst: 0, tout 0.480000 ms at 149
-im -2- got RREQ from -1- and my flag is 0 at 149
-and my cache is 1 at 149
-im -2- got RREQ from -1- and my cache is -1- at 149 with cache neighbor:
--2-
-im -1- got RREQ from -2- and my flag is 0 at 149
-and my cache is 2 at 149
 recvRequest: got my own REQUEST at 149
 (42) -  0 sending Route Request, dst: 1 at 149.50
 (44) -  0 sending Route Request, dst: 1, tout 0.122171 ms at 150
 (46) -  1 sending Route Request, dst: 0 at 149.50
 (48) -  1 sending Route Request, dst: 0, tout 1.800000 ms at 150
-im -2- got RREQ from -1- and my flag is 0 at 150
-and my cache is 1 at 150
-im -2- got RREQ from -1- and my cache is -1- at 150 with cache neighbor:
--2-
-im -1- got RREQ from -2- and my flag is 0 at 150
-and my cache is 2 at 150
 recvRequest: got my own REQUEST at 150
 (50) -  0 sending Route Request, dst: 1 at 149.72
 (52) -  0 sending Route Request, dst: 1, tout 0.458141 ms at 150

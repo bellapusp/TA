@@ -34,6 +34,12 @@ The AODV code developed by the CMU/MONARCH group was optimized and tuned by Sami
 #include <aodv/aodv_packet.h>
 #include <random.h>
 #include <cmu-trace.h>
+#include <iostream>
+#include <vector>
+#include <time.h>
+#include <stdlib.h>
+#include <ctime>
+#include <cstdlib>
 //#include <energy-model.h>
 
 #define max(a,b)        ( (a) > (b) ? (a) : (b) )
@@ -46,6 +52,10 @@ The AODV code developed by the CMU/MONARCH group was optimized and tuned by Sami
 static int route_request = 0;
 #endif
 
+int flag_RREQ[300] = { 0 };
+int cache_rreq_sender[300] = { 0 };
+std::vector < std::vector<int> > list_neighbor(300, std::vector<int>(1));
+std::vector < std::vector<int> > broadcast_node(300, std::vector<int>(1));
 
 /*
   TCL Hooks
@@ -799,39 +809,73 @@ aodv_rt_entry *rt;
    *      - I recently heard this request.
    */
 
-  if(rq->rq_src == index) {
-#ifdef DEBUG
-    fprintf(stderr, "%s: got my own REQUEST at %2.f\n", __FUNCTION__, CURRENT_TIME);
+  FILE *fpdebug = fopen("debug.log","a+");
+  fprintf(fpdebug, "im -%d- got RREQ from -%d- and my flag is %d at %2.f\n", index, ih->saddr(), flag_RREQ[index], CURRENT_TIME);
+  fprintf(fpdebug, "and my cache is %d at %2.f\n", cache_rreq_sender[index], CURRENT_TIME);
+  fclose(fpdebug);
+
+  if(rq->rq_dst != index) {
+    if(rq->rq_src == index) {
+      #ifdef DEBUG
+        fprintf(stderr, "%s: got my own REQUEST at %2.f\n", __FUNCTION__, CURRENT_TIME);
 
 
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s: got my own REQUEST at %2.f\n", __FUNCTION__, CURRENT_TIME);
-      fclose(fpdebug);
-#endif // DEBUG
-    Packet::free(p);
-    return;
-  } 
+        FILE *fpdebug = fopen("debug.log","a+");
+        fprintf(fpdebug, "%s: got my own REQUEST at %2.f\n", __FUNCTION__, CURRENT_TIME);
+        fclose(fpdebug);
+      #endif // DEBUG
+        
+      Packet::free(p);
+      return;
+    }
 
- if (id_lookup(rq->rq_src, rq->rq_bcast_id)) {
+    if (id_lookup(rq->rq_src, rq->rq_bcast_id)) {
+      //kalau saya pernah denger RREQ sejenis ini
+      #ifdef DEBUG
+        fprintf(stderr, "%s: I recently heard this request %2.f\n", __FUNCTION__, CURRENT_TIME);
 
-#ifdef DEBUG
-   fprintf(stderr, "%s: discarding request at %2.f\n", __FUNCTION__, CURRENT_TIME);
+        FILE *fpdebug = fopen("debug.log","a+");
+        fprintf(fpdebug, "%s: I recently heard this request and my flag is %d at %2.f\n", __FUNCTION__, flag_RREQ[index], CURRENT_TIME);
+        fclose(fpdebug);
+      #endif // DEBUG
+    
+      for (unsigned int i = 1; i <= list_neighbor[cache_rreq_sender[index]].size()-1; i++)
+      {
+        if(list_neighbor[cache_rreq_sender[index]][i]==ih->saddr()){
+          Packet::free(p);
+          return;
+        }
+      }
 
+      flag_RREQ[index]++; //tambah flag
 
-   FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s: discarding request %2.f\n", __FUNCTION__, CURRENT_TIME);
-      fclose(fpdebug);
-#endif // DEBUG
- 
-   Packet::free(p);
-   return;
- }
-
- /*
+      if(flag_RREQ[index]<2){
+        flag_RREQ[index]++;
+      }
+      else{
+        Packet::free(p);
+        return;
+      }
+    }
+  /*
   * Cache the broadcast ID
   */
- id_insert(rq->rq_src, rq->rq_bcast_id);
+  id_insert(rq->rq_src, rq->rq_bcast_id);
 
+  cache_rreq_sender[index] = ih->saddr(); //cache sender RREQ
+  }
+
+
+  fopen("debug.log","a+");
+  fprintf(fpdebug, "im -%d- got RREQ from -%d- and my cache is -%d- at %2.f with cache neighbor:\n", index, ih->saddr(), cache_rreq_sender[index], CURRENT_TIME);
+  
+  for (unsigned int i = 1; i <= list_neighbor[cache_rreq_sender[index]].size()-1; i++)
+    {
+      fprintf(fpdebug, "-%d-\n", list_neighbor[cache_rreq_sender[index]][i]);
+    }
+
+
+  fclose(fpdebug);
 
 
  /* 
@@ -842,10 +886,10 @@ aodv_rt_entry *rt;
  aodv_rt_entry *rt0; // rt0 is the reverse route 
    
    rt0 = rtable.rt_lookup(rq->rq_src);
-   if(rt0 == 0) { /* if not in the route table */
+   //if(rt0 == 0) { /* if not in the route table */
    // create an entry for the reverse route.
      rt0 = rtable.rt_add(rq->rq_src);
-   }
+   //}
   
    rt0->rt_expire = max(rt0->rt_expire, (CURRENT_TIME + REV_ROUTE_LIFE));
 
@@ -1571,12 +1615,31 @@ AODV::nb_insert(nsaddr_t id) {
 
 AODV_Neighbor *nb = new AODV_Neighbor(id);
 
+
+  list_neighbor[index].push_back(id); //tambah neighbor
+
+  FILE *nbmylist;
+  nbmylist = fopen("nbmylist.txt", "a");
+  fprintf(nbmylist, "\n ------------------------\n");
+  for (unsigned int i = 0; i < 3; i++)
+  {
+    fprintf(nbmylist,"node %d --",i);
+    for (unsigned int j = 1; j <= list_neighbor[i].size()-1; j++)
+    {
+      fprintf(nbmylist, " %d", list_neighbor[i][j]);      
+    }
+    fprintf(nbmylist,"\n");
+  }
+  fclose(nbmylist);
+
  assert(nb);
  nb->nb_expire = CURRENT_TIME +
                 (1.5 * ALLOWED_HELLO_LOSS * HELLO_INTERVAL);
  LIST_INSERT_HEAD(&nbhead, nb, nb_link);
  seqno += 2;             // set of neighbors changed
  assert ((seqno%2) == 0);
+
+ 
 }
 
 
@@ -1608,6 +1671,29 @@ AODV::nb_delete(nsaddr_t id) {
   fclose(fp);
 
 AODV_Neighbor *nb = nbhead.lh_first;
+
+  for (unsigned int i = 1; i <= list_neighbor[index].size()-1; i++) //hapus neighbor
+  {
+    if(list_neighbor[index][i]==id)
+    {
+      list_neighbor[index].erase (list_neighbor[index].begin()+i);
+      break;
+    }
+  }
+
+  FILE *nbmylist;
+  nbmylist = fopen("nbmylist.txt", "a");
+  fprintf(nbmylist, "\n ------------------------\n");
+  for (unsigned int i = 0; i < 3; i++)
+  {
+    fprintf(nbmylist,"node %d --",i);
+    for (unsigned int j = 1; j <= list_neighbor[i].size()-1; j++)
+    {
+      fprintf(nbmylist, " %d", list_neighbor[i][j]);      
+    }
+    fprintf(nbmylist,"\n");
+  }
+  fclose(nbmylist);
 
  log_link_del(id);
  seqno += 2;     // Set of neighbors changed
