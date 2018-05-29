@@ -798,6 +798,9 @@ aodv_rt_entry *rt;
    *      - I'm the source
    *      - I recently heard this request.
    */
+  FILE *fpdebug = fopen("debug.log","a+");
+  fprintf(fpdebug, "%s: (%2.f) im -%d- got REQUEST from %d\n", __FUNCTION__, CURRENT_TIME, index, ih->saddr());
+  fclose(fpdebug);
 
   if(rq->rq_src == index) {
 #ifdef DEBUG
@@ -805,7 +808,7 @@ aodv_rt_entry *rt;
 
 
    FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s: got my own REQUEST at %2.f\n", __FUNCTION__, CURRENT_TIME);
+      fprintf(fpdebug, "%s: (%2.f) im -%d- got my own REQUEST\n", __FUNCTION__, CURRENT_TIME, index);
       fclose(fpdebug);
 #endif // DEBUG
     Packet::free(p);
@@ -819,7 +822,7 @@ aodv_rt_entry *rt;
 
 
    FILE *fpdebug = fopen("debug.log","a+");
-      fprintf(fpdebug, "%s: discarding request %2.f\n", __FUNCTION__, CURRENT_TIME);
+      fprintf(fpdebug, "%s: (%2.f) im -%d- discarding request\n", __FUNCTION__, CURRENT_TIME, index);
       fclose(fpdebug);
 #endif // DEBUG
  
