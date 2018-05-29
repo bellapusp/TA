@@ -45,7 +45,7 @@ The AODV code developed by the CMU/MONARCH group was optimized and tuned by Sami
 #define max(a,b)        ( (a) > (b) ? (a) : (b) )
 #define CURRENT_TIME    Scheduler::instance().clock()
 
-#define DEBUG
+//#define DEBUG
 //#define ERROR
 
 #ifdef DEBUG
@@ -929,10 +929,10 @@ aodv_rt_entry *rt;
  aodv_rt_entry *rt0; // rt0 is the reverse route 
    
    rt0 = rtable.rt_lookup(rq->rq_src);
-   //if(rt0 == 0) { /* if not in the route table */
+   if(rt0 == 0) { /* if not in the route table */
    // create an entry for the reverse route.
      rt0 = rtable.rt_add(rq->rq_src);
-   //}
+   }
   
    rt0->rt_expire = max(rt0->rt_expire, (CURRENT_TIME + REV_ROUTE_LIFE));
 
