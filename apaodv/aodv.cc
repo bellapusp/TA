@@ -363,11 +363,11 @@ double total_latency = 0.0;
 
 static void
 aodv_rt_failed_callback(Packet *p, void *arg) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "aodv_rt_failed_callback\n");
-  fclose(fp);
-
+  #ifdef DEBUG
+    FILE *fp = fopen("trace.log","a+");
+    fprintf(fp, "aodv_rt_failed_callback\n");
+    fclose(fp);
+  #endif
   ((AODV*) arg)->rt_ll_failed(p);
 }
 
@@ -490,11 +490,11 @@ struct hdr_aodv_error *re = HDR_AODV_ERROR(rerr);
 void
 AODV::local_rt_repair(aodv_rt_entry *rt, Packet *p) {
   
+#ifdef DEBUG
   FILE *fp = fopen("trace.log","a+");
   fprintf(fp, "AODV::local_rt_repair\n");
   fclose(fp);
 
-#ifdef DEBUG
   fprintf(stderr,"%s: Dst - %d\n", __FUNCTION__, rt->rt_dst); 
   
   FILE *fpdebug = fopen("debug.log","a+");
@@ -516,11 +516,11 @@ AODV::local_rt_repair(aodv_rt_entry *rt, Packet *p) {
 void
 AODV::rt_update(aodv_rt_entry *rt, u_int32_t seqnum, u_int16_t metric,
           nsaddr_t nexthop, double expire_time) {
-  
-  FILE *fp = fopen("trace.log","a+");
-  fprintf(fp, "AODV::rt_update\n");
-  fclose(fp);
-
+  #ifdef DEBUG
+    FILE *fp = fopen("trace.log","a+");
+    fprintf(fp, "AODV::rt_update\n");
+    fclose(fp);
+  #endif
 
      rt->rt_seqno = seqnum;
      rt->rt_hops = metric;
