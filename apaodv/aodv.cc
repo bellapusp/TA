@@ -52,9 +52,9 @@ The AODV code developed by the CMU/MONARCH group was optimized and tuned by Sami
 static int route_request = 0;
 #endif
 
-int flag_RREQ[300] = { 0 };
-std::vector < std::vector<int> > list_neighbor(300, std::vector<int>(0));
-std::vector < std::vector<int> > broadcast_node(300, std::vector<int>(0));
+int flag_RREQ[302] = { 0 };
+std::vector < std::vector<int> > list_neighbor(302, std::vector<int>(0));
+std::vector < std::vector<int> > broadcast_node(302, std::vector<int>(0));
 
 /*
   TCL Hooks
@@ -1670,6 +1670,7 @@ AODV_Neighbor *nb = new AODV_Neighbor(id);
 
   list_neighbor[index].push_back(id); //tambah neighbor
 
+#ifdef DEBUG
   FILE *nbmylist;
   nbmylist = fopen("nbmylist.txt", "a");
   fprintf(nbmylist, "\n ------------------------\n");
@@ -1684,6 +1685,7 @@ AODV_Neighbor *nb = new AODV_Neighbor(id);
   }
   fprintf(nbmylist,"at %2.f\n", CURRENT_TIME);
   fclose(nbmylist);
+#endif
 
  assert(nb);
  nb->nb_expire = CURRENT_TIME +
@@ -1734,6 +1736,7 @@ AODV_Neighbor *nb = nbhead.lh_first;
     }
   }
 
+#ifdef DEBUG
   FILE *nbmylist;
   nbmylist = fopen("nbmylist.txt", "a");
   fprintf(nbmylist, "\n ------------------------\n");
@@ -1748,6 +1751,7 @@ AODV_Neighbor *nb = nbhead.lh_first;
   }
   fprintf(nbmylist,"at %2.f\n", CURRENT_TIME);
   fclose(nbmylist);
+#endif
 
  log_link_del(id);
  seqno += 2;     // Set of neighbors changed
