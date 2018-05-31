@@ -52,7 +52,7 @@ The AODV code developed by the CMU/MONARCH group was optimized and tuned by Sami
 static int route_request = 0;
 #endif
 
-int flag_RREQ[302] = { 0 };
+int flag_RREQ[302];
 std::vector < std::vector<int> > list_neighbor(302, std::vector<int>(0));
 std::vector < std::vector<int> > broadcast_node(302, std::vector<int>(0));
 
@@ -879,6 +879,11 @@ aodv_rt_entry *rt;
         flag_RREQ[index]++;
       }
       else{
+        #ifdef DEBUG
+          fpdebug = fopen("debug.log","a+");
+          fprintf(fpdebug, "\n(%2.f) (flag) im -%d- dropping RREQ -%d- coz my flag is %d\n", CURRENT_TIME, index, ih->saddr(), flag_RREQ[index]);
+          fclose(fpdebug);
+        #endif // DEBUG
         Packet::free(p);
         return;
       }
