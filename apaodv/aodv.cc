@@ -875,8 +875,6 @@ aodv_rt_entry *rt;
         }
       }
 
-      flag_RREQ[index]++; //tambah flag
-
       if(flag_RREQ[index]<2){
         flag_RREQ[index]++;
       }
@@ -891,8 +889,8 @@ aodv_rt_entry *rt;
         fprintf(fpdebug, "\n(%2.f) (new) im -%d- never heard this kind of RREQ from -%d- and my flag is %d\n", CURRENT_TIME, index, ih->saddr(), flag_RREQ[index]);
         fclose(fpdebug);
       #endif // DEBUG
-      //reinitiate flag kalau rreq baru
-      flag_RREQ[index]=0;
+      //reinitiate flag karena rreq baru
+      flag_RREQ[index]=1;
       //hapus cache broadcast node
       broadcast_node[index].clear();
       //cache the sender
